@@ -1,14 +1,9 @@
 package se.thune.toneweaver
 
-import android.media.AudioAttributes
-import android.media.AudioFormat
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.util.Log
 import kotlinx.android.synthetic.main.draw_fragment.*
-import android.media.AudioTrack
-import android.media.AudioManager
-import android.util.AttributeSet
 import android.view.*
 import java.util.*
 import kotlin.concurrent.thread
@@ -28,24 +23,17 @@ class DrawFragment : Fragment() {
   private val numberOfLines = 500
   private val scale = 10
 
-  enum class SoundMaker {
-    PLAY, STOP, OFF
-  }
-  private val volIncTime = 300.0f
-  private val volDecTime = 300.0f
 
   private class BufferHolder {
-    lateinit var mBuffer : ShortArray
+    var mBuffer : ShortArray
 
     constructor(mBuffer: ShortArray) {
       this.mBuffer = mBuffer
     }
   }
-  private val bufferHolder = BufferHolder(shortArrayOf())
 
   private var playField = false
-
-  private var soundMaker: SoundMaker = SoundMaker.OFF
+  private var currentSound : SoundTone = SoundTone(shortArrayOf())
   private var sampling = false
 
   private var x: Float = 0.0f
@@ -67,15 +55,7 @@ class DrawFragment : Fragment() {
       true
     })
     sound_button.setOnTouchListener({ _, event ->
-      when (event.action) {
-        MotionEvent.ACTION_DOWN -> {
-          Log.d(TAG, "Btn Down")
-          val makeNewSound = soundMaker == SoundMaker.OFF
-          soundMaker = SoundMaker.PLAY
-          if (makeNewSound) makeSoftSound(BufferHolder(samples.toShortArray()))
-        }
-        MotionEvent.ACTION_UP -> soundMaker = SoundMaker.STOP
-      }
+      handlePlayButton(event)
       true
     })
     play_field.setOnTouchListener({ _, event ->
@@ -89,26 +69,26 @@ class DrawFragment : Fragment() {
     })
   }
 
-  inline fun <T : View> T.afterMeasured(crossinline f: T.() -> Unit) {
-    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-      override fun onGlobalLayout() {
-        if (measuredWidth > 0 && measuredHeight > 0) {
-          viewTreeObserver.removeOnGlobalLayoutListener(this)
-          f()
-        }
+  private fun handlePlayButton(event: MotionEvent) {
+    when (event.action) {
+      MotionEvent.ACTION_DOWN -> {
+        Log.d(TAG, "Btn Down")
+        currentSound.stop()
+        currentSound = SoundTone(samples.toShortArray())
       }
-    })
+        MotionEvent.ACTION_UP -> currentSound.stop()
+    }
   }
+
 
   private fun handleViewTouch(event: MotionEvent) {
     if (playField) when (event.action) {
       MotionEvent.ACTION_DOWN -> {
-        soundMaker = SoundMaker.PLAY
-        bufferHolder.mBuffer = scale(event.y/screenHeight*16,samples.toShortArray())
-        makeSoftSound(bufferHolder)
+        currentSound.stop()
+        currentSound = SoundTone(scale(event.y/screenHeight*16,samples.toShortArray()))
       }
       MotionEvent.ACTION_UP -> {
-        soundMaker = SoundMaker.STOP
+        currentSound.stop()
       }
       MotionEvent.ACTION_MOVE -> {
       }
@@ -136,7 +116,6 @@ class DrawFragment : Fragment() {
     return arr.foldIndexed(shortArrayOf(), { i , a, s ->
       if (i%(mult.toInt()+1)==0) a.plus(s) else a
     })
-
   }
 
   private fun startSampler() {
@@ -204,57 +183,15 @@ class DrawFragment : Fragment() {
     return ((System.currentTimeMillis() - time) / scale).toFloat()
   }
 
-  private fun makeSoftSound(bf : BufferHolder) {
-    thread(start = true) {
-      val mBufferSize = AudioTrack.getMinBufferSize(44100,
-        AudioFormat.CHANNEL_OUT_MONO,
-        AudioFormat.ENCODING_PCM_8BIT)
-
-      //TODO FIX
-      //AudioTrack(AudioAttributes.USAGE_MEDIA, AudioFormat.CHANNEL_OUT_MONO,
-      //mBufferSize, AudioTrack.MODE_STREAM)
-      val mAudioTrack =
-        AudioTrack(AudioManager.STREAM_MUSIC, 44100,
-        AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
-        mBufferSize, AudioTrack.MODE_STREAM)
-
-      mAudioTrack.play()
-      var volume = 0f
-      val startTime = System.currentTimeMillis()
-      while (soundMaker == SoundMaker.PLAY) {
-        thread(start = true) {
-          val currentMax = volume
-          val fraction = (AudioTrack.getMaxVolume() - currentMax) / AudioTrack.getMaxVolume()
-          while (volume < 1f && soundMaker == SoundMaker.PLAY) {
-            mAudioTrack.setVolume(volume)
-            volume = Math.min(AudioTrack.getMaxVolume(),
-              currentMax + (AudioTrack.getMaxVolume() - currentMax) * (System.currentTimeMillis() - startTime) / (volIncTime * fraction))
-            Thread.sleep(10)
-          }
-        }
-        while (soundMaker == SoundMaker.PLAY) {
-          mAudioTrack.write(bf.mBuffer, 0, bf.mBuffer.size)
-        }
-        val stopTime = System.currentTimeMillis()
-        thread(start = true) {
-          val currentMax = volume
-          val fraction = currentMax / AudioTrack.getMaxVolume()
-          while (volume > 0f && soundMaker == SoundMaker.STOP) {
-            mAudioTrack.setVolume(volume)
-            volume = Math.min(AudioTrack.getMaxVolume(), currentMax * (1 - (System.currentTimeMillis() - stopTime) / (volDecTime * fraction)))
-            Thread.sleep(10)
-          }
-          if (soundMaker == SoundMaker.STOP) soundMaker = SoundMaker.OFF
-        }
-        while (soundMaker == SoundMaker.STOP) {
-          mAudioTrack.write(bf.mBuffer, 0, bf.mBuffer.size)
+  private inline fun <T : View> T.afterMeasured(crossinline f: T.() -> Unit) {
+    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+      override fun onGlobalLayout() {
+        if (measuredWidth > 0 && measuredHeight > 0) {
+          viewTreeObserver.removeOnGlobalLayoutListener(this)
+          f()
         }
       }
-      mAudioTrack.stop()
-      mAudioTrack.release()
-    }
+    })
   }
-
-  //TODO write fragment
 }
 
