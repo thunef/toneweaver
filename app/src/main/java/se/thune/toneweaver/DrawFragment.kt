@@ -5,6 +5,8 @@ import android.support.v4.app.Fragment
 import android.util.Log
 import kotlinx.android.synthetic.main.draw_fragment.*
 import android.view.*
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import java.util.*
 import kotlin.concurrent.thread
 
@@ -33,6 +35,7 @@ class DrawFragment : Fragment() {
   }
 
   private var playField = false
+  private var pianoField = false
   private var currentSound : SoundTone = SoundTone(shortArrayOf())
   private var sampling = false
 
@@ -62,7 +65,24 @@ class DrawFragment : Fragment() {
       when (event.action) {
         MotionEvent.ACTION_UP -> {
           playField = !playField
+          pianoField = false
+
+          piano.visibility = if (pianoField) VISIBLE else GONE
           play_field.setText(if (playField) R.string.playfield_on else R.string.playfield_off)
+          piano_field.setText(if (pianoField) R.string.piano_on else R.string.piano_off)
+        }
+      }
+      true
+    })
+    piano_field.setOnTouchListener({ _, event ->
+      when (event.action) {
+        MotionEvent.ACTION_UP -> {
+          pianoField = !pianoField
+          playField = false
+
+          piano.visibility = if (pianoField) VISIBLE else GONE
+          play_field.setText(if (playField) R.string.playfield_on else R.string.playfield_off)
+          piano_field.setText(if (pianoField) R.string.piano_on else R.string.piano_off)
         }
       }
       true

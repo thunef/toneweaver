@@ -32,7 +32,7 @@ class SoundTone//TODO FIX
       //mBufferSize, AudioTrack.MODE_STREAM)
       val mAudioTrack =
         AudioTrack(AudioManager.STREAM_MUSIC, 44100,
-          AudioFormat.CHANNEL_OUT_5POINT1, AudioFormat.ENCODING_PCM_16BIT,
+          AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
           mBufferSize, AudioTrack.MODE_STREAM)
 
       mAudioTrack.play()
