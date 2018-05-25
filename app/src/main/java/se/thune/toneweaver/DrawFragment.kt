@@ -1,12 +1,16 @@
 package se.thune.toneweaver
 
+import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
+import android.support.annotation.RequiresApi
 import android.support.v4.app.Fragment
 import android.util.Log
 import kotlinx.android.synthetic.main.draw_fragment.*
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.widget.Button
 import java.util.*
 import kotlin.concurrent.thread
 
@@ -45,49 +49,7 @@ class DrawFragment : Fragment() {
     return inflater.inflate(R.layout.draw_fragment, container, false)
   }
 
-  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    super.onViewCreated(view, savedInstanceState)
-    view.afterMeasured {
-      screenHeight = view.height
-      screenWidth = view.width
-    }
 
-
-    view.setOnTouchListener({ _, event ->
-      handleViewTouch(event)
-      true
-    })
-    sound_button.setOnTouchListener({ _, event ->
-      handlePlayButton(event)
-      true
-    })
-    play_field.setOnTouchListener({ _, event ->
-      when (event.action) {
-        MotionEvent.ACTION_UP -> {
-          playField = !playField
-          pianoField = false
-
-          piano.visibility = if (pianoField) VISIBLE else GONE
-          play_field.setText(if (playField) R.string.playfield_on else R.string.playfield_off)
-          piano_field.setText(if (pianoField) R.string.piano_on else R.string.piano_off)
-        }
-      }
-      true
-    })
-    piano_field.setOnTouchListener({ _, event ->
-      when (event.action) {
-        MotionEvent.ACTION_UP -> {
-          pianoField = !pianoField
-          playField = false
-
-          piano.visibility = if (pianoField) VISIBLE else GONE
-          play_field.setText(if (playField) R.string.playfield_on else R.string.playfield_off)
-          piano_field.setText(if (pianoField) R.string.piano_on else R.string.piano_off)
-        }
-      }
-      true
-    })
-  }
 
   private fun handlePlayButton(event: MotionEvent) {
     when (event.action) {
@@ -95,6 +57,7 @@ class DrawFragment : Fragment() {
         Log.d(TAG, "Btn Down")
         currentSound.stop()
         currentSound = SoundTone(samples.toShortArray())
+
       }
         MotionEvent.ACTION_UP -> currentSound.stop()
     }
@@ -211,6 +174,114 @@ class DrawFragment : Fragment() {
           f()
         }
       }
+    })
+  }
+
+  internal inner class WorkingObservable : Observable() {
+
+    fun setChange() {
+      setChanged()
+    }
+  }
+
+  @RequiresApi(Build.VERSION_CODES.M)
+  fun setUpPiano() {
+    val arr = samples.toShortArray()
+    val ob = WorkingObservable()
+    handleKey(km12,-12, arr, ob)
+    handleKey(km11,-11, arr, ob)
+    handleKey(km10, -10, arr, ob)
+    handleKey(km9, -9, arr, ob)
+    handleKey(km8, -8, arr, ob)
+    handleKey(km7, -7, arr, ob)
+    handleKey(km6, -6, arr, ob)
+    handleKey(km5, -5, arr, ob)
+    handleKey(km4, -4, arr, ob)
+    handleKey(km3, -3, arr, ob)
+    handleKey(km2, -2, arr, ob)
+    handleKey(km1, -1, arr, ob)
+    handleKey(k0, 0, arr, ob)
+    handleKey(kp1, 1, arr, ob)
+    handleKey(kp2, 2, arr, ob)
+    handleKey(kp3, 3, arr, ob)
+    handleKey(kp4, 4, arr, ob)
+    handleKey(kp5, 5, arr, ob)
+    handleKey(kp6, 6, arr, ob)
+    handleKey(kp7, 7, arr, ob)
+    handleKey(kp8, 8, arr, ob)
+    handleKey(kp9, 9, arr, ob)
+    handleKey(kp10, 10, arr, ob)
+    handleKey(kp11, 11, arr, ob)
+    handleKey(kp12, 12, arr, ob)
+    handleKey(kp13, 13, arr, ob)
+    piano.setOnScrollChangeListener({_,_,_,_,_ -> Log.d("TAG;" , "Scrolling to "); ob.setChange(); ob.notifyObservers(); true})
+
+  }
+
+  @SuppressLint("ClickableViewAccessibility")
+  fun handleKey(k : Button, i : Int, arr : ShortArray, ob : Observable) {
+    val keyHandler = PianoKeyHandler(SoundTone.pitch(SoundTone.getPitch(i), arr))
+    ob.addObserver(keyHandler)
+    k.setOnTouchListener({_, event ->
+      when (event.action) {
+        MotionEvent.ACTION_DOWN -> keyHandler.start()
+        MotionEvent.ACTION_UP -> keyHandler.stop()
+      }
+      true
+    })
+  }
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+    view.afterMeasured {
+      screenHeight = view.height
+      screenWidth = view.width
+    }
+
+    view.setOnTouchListener({ _, event ->
+      handleViewTouch(event)
+      true
+    })
+    sound_button.setOnTouchListener({ _, event ->
+      handlePlayButton(event)
+      true
+    })
+    play_field.setOnTouchListener({ _, event ->
+      when (event.action) {
+        MotionEvent.ACTION_UP -> {
+          playField = !playField
+          pianoField = false
+
+          piano.visibility = if (pianoField) VISIBLE else GONE
+          play_field.setText(if (playField) R.string.playfield_on else R.string.playfield_off)
+          piano_field.setText(if (pianoField) R.string.piano_on else R.string.piano_off)
+        }
+      }
+      true
+    })
+    piano_field.setOnTouchListener({ _, event ->
+      when (event.action) {
+        MotionEvent.ACTION_UP -> {
+          pianoField = !pianoField
+          playField = false
+
+          piano.visibility = if (pianoField) VISIBLE else GONE
+          play_field.setText(if (playField) R.string.playfield_on else R.string.playfield_off)
+          piano_field.setText(if (pianoField) R.string.piano_on else R.string.piano_off)
+          if (pianoField) setUpPiano()
+        }
+      }
+      true
+    })
+    k0.setOnTouchListener({ _, event ->
+      when (event.action) {
+        MotionEvent.ACTION_UP -> {
+          Log.d("TEST", "Starting")
+          val buffer : ShortArray = SoundTone.pitch(SoundTone.getPitch(2), shortArrayOf(400,408,420,450,460,300,310))
+          Log.d("TESTING" , ""+ SoundTone.getPitch(2) + " " + SoundTone.getPitch(-1) + " " + SoundTone.getPitch(12) + " " + SoundTone.getPitch(0))
+          buffer.map { x -> Log.d("TESTBuffer",  ""+x) }}
+      }
+      true
     })
   }
 }

@@ -14,8 +14,8 @@ class SoundTone//TODO FIX
     PLAY, STOP, OFF
   }
   private var soundMaker = SoundMaker.PLAY
-  private val volIncTime = 3000.0f
-  private val volDecTime = 3000.0f
+  private val volIncTime = 80.0f
+  private val volDecTime = 200.0f
 
   fun stop() {
     if (soundMaker == SoundMaker.PLAY) soundMaker = SoundMaker.STOP
@@ -66,6 +66,22 @@ class SoundTone//TODO FIX
 
       mAudioTrack.stop()
       mAudioTrack.release()
+    }
+  }
+
+  companion object {
+    fun getPitch(a : Int) : Float = Math.pow(2.0, a.toDouble() / 12).toFloat()
+    fun pitch (p : Float, mBuffer: ShortArray) : ShortArray {
+      var di: Double = 0.0
+      var i: Int = 0
+      val pBuffer = ShortArray(Math.floor(mBuffer.size / p.toDouble()).toInt())
+      while (di < mBuffer.size - 2) {
+        // L + ((R - L) * fraction)
+        pBuffer[i] = (mBuffer[Math.floor(di).toInt()] + ((mBuffer[Math.ceil(di).toInt()] - (mBuffer[Math.floor(di).toInt()])) * (di - Math.floor(di)))).toShort()
+        di += p
+        i++
+      }
+      return pBuffer
     }
   }
 
