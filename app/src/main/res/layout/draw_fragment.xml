@@ -6,18 +6,32 @@
     android:layout_height="match_parent"
     android:background="@color/colorPrimaryDark">
 
+
     <se.thune.toneweaver.DrawView
         android:id="@+id/draw_view"
         class="se.thune.toneweaver.DrawView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+
+    <TextView
+        android:id="@+id/seconds_played"
+        android:textColor="@color/colorAccent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="0.0s"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <Button
         android:id="@+id/sound_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Play"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/seconds_played" />
 
     <Button
         android:id="@+id/save_button"
@@ -25,20 +39,23 @@
         android:layout_height="wrap_content"
         android:text="Save(not done)"
         app:layout_constraintLeft_toRightOf="@id/sound_button"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/seconds_played"/>
 
     <Button
         android:id="@+id/play_field"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/playfield_off"
-        app:layout_constraintLeft_toRightOf="@id/save_button" />
+        android:visibility="gone"
+        app:layout_constraintLeft_toRightOf="@id/save_button"
+        app:layout_constraintTop_toBottomOf="@id/seconds_played" />
     <Button
         android:id="@+id/piano_field"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/piano_off"
-        app:layout_constraintLeft_toRightOf="@id/play_field" />
+        app:layout_constraintLeft_toRightOf="@id/play_field"
+        app:layout_constraintTop_toBottomOf="@id/seconds_played"/>
 
 
 
@@ -653,6 +670,7 @@
         </android.support.constraint.ConstraintLayout>
 
     </ScrollView>
+
 
 
 </android.support.constraint.ConstraintLayout>

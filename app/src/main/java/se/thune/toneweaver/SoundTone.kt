@@ -3,21 +3,25 @@ package se.thune.toneweaver
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
+import android.util.Log
 import kotlin.concurrent.thread
 
 class SoundTone//TODO FIX
 //AudioTrack(AudioAttributes.USAGE_MEDIA, AudioFormat.CHANNEL_OUT_MONO,
 //mBufferSize, AudioTrack.MODE_STREAM)
 (mBuffer: ShortArray) {
-
   enum class SoundMaker {
     PLAY, STOP, OFF
   }
+  enum class VolumeMaker {
+    UP, STEADY, DOWN
+  }
   private var soundMaker = SoundMaker.PLAY
-  private val volIncTime = 80.0f
-  private val volDecTime = 200.0f
+  private var volumeMaker = VolumeMaker.UP
+  private val volIncTime = 120.0f
+  private val volDecTime = 300.0f
 
-  fun stop() {
+  fun drop() {
     if (soundMaker == SoundMaker.PLAY) soundMaker = SoundMaker.STOP
   }
 
@@ -39,18 +43,20 @@ class SoundTone//TODO FIX
       var volume = 0f
       val startTime = System.currentTimeMillis()
       thread(start = true) {
-        while (volume < 1f && soundMaker == SoundMaker.PLAY) {
+        while (volume < AudioTrack.getMaxVolume()) {
           mAudioTrack.setVolume(volume)
           volume = Math.min(AudioTrack.getMaxVolume(),
             AudioTrack.getMaxVolume() * (System.currentTimeMillis() - startTime) / volIncTime)
           Thread.sleep(10)
         }
+        volumeMaker = VolumeMaker.STEADY
       }
-      while (soundMaker == SoundMaker.PLAY) {
+      while (soundMaker == SoundMaker.PLAY || volumeMaker == VolumeMaker.UP) {
         mAudioTrack.write(mBuffer, 0, mBuffer.size)
       }
       val stopTime = System.currentTimeMillis()
       thread(start = true) {
+        volumeMaker = VolumeMaker.DOWN
         val currentMax = volume
         val fraction = currentMax / AudioTrack.getMaxVolume()
         while (volume > 0f && soundMaker == SoundMaker.STOP) {
@@ -62,6 +68,7 @@ class SoundTone//TODO FIX
       }
       while (soundMaker == SoundMaker.STOP) {
         mAudioTrack.write(mBuffer, 0, mBuffer.size)
+        Log.d("DOWN", "" + soundMaker)
       }
 
       mAudioTrack.stop()

@@ -55,11 +55,11 @@ class DrawFragment : Fragment() {
     when (event.action) {
       MotionEvent.ACTION_DOWN -> {
         Log.d(TAG, "Btn Down")
-        currentSound.stop()
+        currentSound.drop()
         currentSound = SoundTone(samples.toShortArray())
 
       }
-        MotionEvent.ACTION_UP -> currentSound.stop()
+        MotionEvent.ACTION_UP -> currentSound.drop()
     }
   }
 
@@ -67,11 +67,11 @@ class DrawFragment : Fragment() {
   private fun handleViewTouch(event: MotionEvent) {
     if (playField) when (event.action) {
       MotionEvent.ACTION_DOWN -> {
-        currentSound.stop()
+        currentSound.drop()
         currentSound = SoundTone(scale(event.y/screenHeight*16,samples.toShortArray()))
       }
       MotionEvent.ACTION_UP -> {
-        currentSound.stop()
+        currentSound.drop()
       }
       MotionEvent.ACTION_MOVE -> {
       }

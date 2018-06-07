@@ -6,15 +6,15 @@ import java.util.*
 class PianoKeyHandler(val mBuffer: ShortArray) : Observer {
   override fun update(o: Observable?, arg: Any?) {
     Log.d("PIANBO","getting observed")
-    currentSound.stop()
+    currentSound.drop()
   }
 
   private var currentSound : SoundTone = SoundTone(shortArrayOf())
   fun start() {
-    currentSound.stop()
+    currentSound.drop()
     currentSound = SoundTone(mBuffer)
   }
   fun stop() {
-    currentSound.stop()
+    currentSound.drop()
   }
 }
