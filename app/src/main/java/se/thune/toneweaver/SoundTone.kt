@@ -9,7 +9,7 @@ import kotlin.concurrent.thread
 class SoundTone//TODO FIX
 //AudioTrack(AudioAttributes.USAGE_MEDIA, AudioFormat.CHANNEL_OUT_MONO,
 //mBufferSize, AudioTrack.MODE_STREAM)
-(mBuffer: ShortArray) {
+(mBuffer: ShortArray, repeat : Boolean) {
   enum class SoundMaker {
     PLAY, STOP, OFF
   }
@@ -26,6 +26,41 @@ class SoundTone//TODO FIX
   }
 
   init {
+    if (repeat)
+      playRepeat(mBuffer)
+    else {
+      play(mBuffer)
+    }
+  }
+
+  fun play(mBuffer: ShortArray) {
+    if (!mBuffer.isEmpty()) thread(start = true) {
+      val mBufferSize = AudioTrack.getMinBufferSize(44100,
+        AudioFormat.CHANNEL_OUT_MONO,
+        AudioFormat.ENCODING_PCM_8BIT)
+
+      //TODO FIX
+      //AudioTrack(AudioAttributes.USAGE_MEDIA, AudioFormat.CHANNEL_OUT_MONO,
+      //mBufferSize, AudioTrack.MODE_STREAM)
+      val mAudioTrack =
+        AudioTrack(AudioManager.STREAM_MUSIC, 44100,
+          AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
+          mBufferSize, AudioTrack.MODE_STREAM)
+
+      mAudioTrack.play()
+
+      var mSubBuffer = mBuffer.toList()
+      while (mSubBuffer.isNotEmpty()) {
+        mAudioTrack.write(mSubBuffer.take(10000).toShortArray(), 0, 2000)
+        mSubBuffer = mSubBuffer.drop(10000)
+      }
+
+      mAudioTrack.stop()
+      mAudioTrack.release()
+    }
+  }
+
+  fun playRepeat(mBuffer: ShortArray) {
     if (!mBuffer.isEmpty()) thread(start = true) {
       val mBufferSize = AudioTrack.getMinBufferSize(44100,
         AudioFormat.CHANNEL_OUT_MONO,

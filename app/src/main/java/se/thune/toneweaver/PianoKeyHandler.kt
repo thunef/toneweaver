@@ -9,10 +9,10 @@ class PianoKeyHandler(val mBuffer: ShortArray) : Observer {
     currentSound.drop()
   }
 
-  private var currentSound : SoundTone = SoundTone(shortArrayOf())
+  private var currentSound : SoundTone = SoundTone(shortArrayOf(), false)
   fun start() {
     currentSound.drop()
-    currentSound = SoundTone(mBuffer)
+    currentSound = SoundTone(mBuffer, false)
   }
   fun stop() {
     currentSound.drop()

@@ -3,6 +3,8 @@ package se.thune.toneweaver
 import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.support.annotation.RequiresApi
 import android.support.v4.app.Fragment
 import android.util.Log
@@ -24,10 +26,10 @@ class DrawFragment : Fragment() {
   private var screenWidth = 0
   //todo change
   private val center: Float = 1400f
-  private val updateDelaySampler = 33L
+  private val updateDelaySampler = 1L
   private val updateDelayDraw = 33L
   private val numberOfLines = 500
-  private val scale = 10
+  private val scale = 6
 
 
   private class BufferHolder {
@@ -40,7 +42,7 @@ class DrawFragment : Fragment() {
 
   private var playField = false
   private var pianoField = false
-  private var currentSound : SoundTone = SoundTone(shortArrayOf())
+  private var currentSound : SoundTone = SoundTone(shortArrayOf(), false)
   private var sampling = false
 
   private var x: Float = 0.0f
@@ -56,7 +58,7 @@ class DrawFragment : Fragment() {
       MotionEvent.ACTION_DOWN -> {
         Log.d(TAG, "Btn Down")
         currentSound.drop()
-        currentSound = SoundTone(samples.toShortArray())
+        currentSound = SoundTone(samples.toShortArray(), true)
 
       }
         MotionEvent.ACTION_UP -> currentSound.drop()
@@ -68,7 +70,7 @@ class DrawFragment : Fragment() {
     if (playField) when (event.action) {
       MotionEvent.ACTION_DOWN -> {
         currentSound.drop()
-        currentSound = SoundTone(scale(event.y/screenHeight*16,samples.toShortArray()))
+        currentSound = SoundTone(scale(event.y/screenHeight*16,samples.toShortArray()), true)
       }
       MotionEvent.ACTION_UP -> {
         currentSound.drop()
@@ -103,6 +105,7 @@ class DrawFragment : Fragment() {
 
   private fun startSampler() {
     sampling = true
+    var drawing = false
     var startTimeSample = System.currentTimeMillis()
     lines.add(500f)
     lines.add(timeSinceToY(System.currentTimeMillis()))
@@ -110,33 +113,39 @@ class DrawFragment : Fragment() {
       while (sampling) {
         samples.add(((x / screenWidth - 0.5) * java.lang.Short.MAX_VALUE).toShort())
 
-
-        lines.add(0,timeSinceToY(startTimeSample))
-        lines.add(0,x)
-        lines.add(0,timeSinceToY(startTimeSample))
-        lines.add(0,x)
+        if (!drawing) {
+          lines.add(0, timeSinceToY(startTimeSample))
+          lines.add(0, x)
+          lines.add(0, timeSinceToY(startTimeSample))
+          lines.add(0, x)
+          drawing = true
+        }
 
         Thread.sleep(updateDelaySampler)
       }
     }
     thread(start = true) {
-      var lastTimeDraw: Long
+      var lastTimeDraw: Long = System.currentTimeMillis()
       while (sampling) {
-        lastTimeDraw = System.currentTimeMillis()
-        val timeSinceStartY = timeSinceToY(startTimeSample)
-
-
-        try {
-          val drawLines = lines.toFloatArray()
-            .drop(2)
-            .take(numberOfLines * 2)
-            .mapIndexed({ i, v -> if (i % 2 == 0) v else screenHeight + v - timeSinceStartY })
-            .toFloatArray()
-          draw_view.setDrawPoints(drawLines)
-        } catch (e : ConcurrentModificationException) {
-          Log.d(TAG, "NOT GOOD concurrent") // TODO FIX
-        } catch (e : IndexOutOfBoundsException) {
-          Log.d(TAG, "NOT GOOD index") // TODO FIX
+        if (drawing) {
+          lastTimeDraw = System.currentTimeMillis()
+          val timeSinceStartY = timeSinceToY(startTimeSample)
+          try {
+            val drawLines = lines.toFloatArray()
+              .drop(2)
+              .take(numberOfLines * 2)
+              .mapIndexed({ i, v -> if (i % 2 == 0) v else screenHeight + v - timeSinceStartY })
+              .toFloatArray()
+            draw_view.setDrawPoints(drawLines)
+            Handler(Looper.getMainLooper()).post {
+              seconds_played.text = "" + "%.6f".format(samples.size / 44100.0) + "s"
+            }
+          } catch (e: ConcurrentModificationException) {
+            Log.d(TAG, "NOT GOOD concurrent") // TODO FIX
+          } catch (e: IndexOutOfBoundsException) {
+            Log.d(TAG, "NOT GOOD index") // TODO FIX
+          }
+          drawing = false
         }
         Thread.sleep(Math.max(0, updateDelayDraw - (System.currentTimeMillis() - lastTimeDraw)))
       }
@@ -184,9 +193,8 @@ class DrawFragment : Fragment() {
     }
   }
 
-  @RequiresApi(Build.VERSION_CODES.M)
   fun setUpPiano() {
-    val arr = samples.toShortArray()
+    val arr = samples.plus(Array<Short>(3000) {0}).toShortArray()
     val ob = WorkingObservable()
     handleKey(km12,-12, arr, ob)
     handleKey(km11,-11, arr, ob)
