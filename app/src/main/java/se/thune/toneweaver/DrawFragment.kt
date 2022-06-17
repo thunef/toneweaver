@@ -5,14 +5,14 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.support.annotation.RequiresApi
-import android.support.v4.app.Fragment
+import androidx.annotation.RequiresApi
+import androidx.fragment.app.Fragment
 import android.util.Log
-import kotlinx.android.synthetic.main.draw_fragment.*
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Button
+import se.thune.toneweaver.databinding.DrawFragmentBinding
 import java.util.*
 import kotlin.concurrent.thread
 
@@ -26,10 +26,16 @@ class DrawFragment : Fragment() {
   private var screenWidth = 0
   //todo change
   private val center: Float = 1400f
-  private val updateDelaySampler = 1L
+  private val updateDelaySampler = 50L
   private val updateDelayDraw = 33L
   private val numberOfLines = 500
-  private val scale = 6
+  private val scale = 20
+
+  private var _binding: DrawFragmentBinding? = null
+  // This property is only valid between onCreateView and
+  // onDestroyView.
+  private val binding get() = _binding!!
+
 
 
   private class BufferHolder {
@@ -48,10 +54,14 @@ class DrawFragment : Fragment() {
   private var x: Float = 0.0f
 
   override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-    return inflater.inflate(R.layout.draw_fragment, container, false)
+    _binding = DrawFragmentBinding.inflate(inflater, container, false)
+    return binding.root
   }
 
-
+  override fun onDestroyView() {
+    super.onDestroyView()
+    _binding = null
+  }
 
   private fun handlePlayButton(event: MotionEvent) {
     when (event.action) {
@@ -111,7 +121,7 @@ class DrawFragment : Fragment() {
     lines.add(timeSinceToY(System.currentTimeMillis()))
     thread(start = true) {
       while (sampling) {
-        samples.add(((x / screenWidth - 0.5) * java.lang.Short.MAX_VALUE).toShort())
+        samples.add(((x / screenWidth - 0.5) * java.lang.Short.MAX_VALUE).toInt().toShort())
 
         if (!drawing) {
           lines.add(0, timeSinceToY(startTimeSample))
@@ -136,9 +146,9 @@ class DrawFragment : Fragment() {
               .take(numberOfLines * 2)
               .mapIndexed({ i, v -> if (i % 2 == 0) v else screenHeight + v - timeSinceStartY })
               .toFloatArray()
-            draw_view.setDrawPoints(drawLines)
+            binding.drawView.setDrawPoints(drawLines)
             Handler(Looper.getMainLooper()).post {
-              seconds_played.text = "" + "%.6f".format(samples.size / 44100.0) + "s"
+              binding.secondsPlayed.text = "" + "%.6f".format(samples.size / 44100.0) + "s"
             }
           } catch (e: ConcurrentModificationException) {
             Log.d(TAG, "NOT GOOD concurrent") // TODO FIX
@@ -196,33 +206,33 @@ class DrawFragment : Fragment() {
   fun setUpPiano() {
     val arr = samples.plus(Array<Short>(3000) {0}).toShortArray()
     val ob = WorkingObservable()
-    handleKey(km12,-12, arr, ob)
-    handleKey(km11,-11, arr, ob)
-    handleKey(km10, -10, arr, ob)
-    handleKey(km9, -9, arr, ob)
-    handleKey(km8, -8, arr, ob)
-    handleKey(km7, -7, arr, ob)
-    handleKey(km6, -6, arr, ob)
-    handleKey(km5, -5, arr, ob)
-    handleKey(km4, -4, arr, ob)
-    handleKey(km3, -3, arr, ob)
-    handleKey(km2, -2, arr, ob)
-    handleKey(km1, -1, arr, ob)
-    handleKey(k0, 0, arr, ob)
-    handleKey(kp1, 1, arr, ob)
-    handleKey(kp2, 2, arr, ob)
-    handleKey(kp3, 3, arr, ob)
-    handleKey(kp4, 4, arr, ob)
-    handleKey(kp5, 5, arr, ob)
-    handleKey(kp6, 6, arr, ob)
-    handleKey(kp7, 7, arr, ob)
-    handleKey(kp8, 8, arr, ob)
-    handleKey(kp9, 9, arr, ob)
-    handleKey(kp10, 10, arr, ob)
-    handleKey(kp11, 11, arr, ob)
-    handleKey(kp12, 12, arr, ob)
-    handleKey(kp13, 13, arr, ob)
-    piano.setOnScrollChangeListener({_,_,_,_,_ -> Log.d("TAG;" , "Scrolling to "); ob.setChange(); ob.notifyObservers(); true})
+    handleKey(binding.km12,-12, arr, ob)
+    handleKey(binding.km11,-11, arr, ob)
+    handleKey(binding.km10, -10, arr, ob)
+    handleKey(binding.km9, -9, arr, ob)
+    handleKey(binding.km8, -8, arr, ob)
+    handleKey(binding.km7, -7, arr, ob)
+    handleKey(binding.km6, -6, arr, ob)
+    handleKey(binding.km5, -5, arr, ob)
+    handleKey(binding.km4, -4, arr, ob)
+    handleKey(binding.km3, -3, arr, ob)
+    handleKey(binding.km2, -2, arr, ob)
+    handleKey(binding.km1, -1, arr, ob)
+    handleKey(binding.k0, 0, arr, ob)
+    handleKey(binding.kp1, 1, arr, ob)
+    handleKey(binding.kp2, 2, arr, ob)
+    handleKey(binding.kp3, 3, arr, ob)
+    handleKey(binding.kp4, 4, arr, ob)
+    handleKey(binding.kp5, 5, arr, ob)
+    handleKey(binding.kp6, 6, arr, ob)
+    handleKey(binding.kp7, 7, arr, ob)
+    handleKey(binding.kp8, 8, arr, ob)
+    handleKey(binding.kp9, 9, arr, ob)
+    handleKey(binding.kp10, 10, arr, ob)
+    handleKey(binding.kp11, 11, arr, ob)
+    handleKey(binding.kp12, 12, arr, ob)
+    handleKey(binding.kp13, 13, arr, ob)
+    binding.piano.setOnScrollChangeListener({_,_,_,_,_ -> Log.d("TAG;" , "Scrolling to "); ob.setChange(); ob.notifyObservers(); true})
 
   }
 
@@ -250,38 +260,38 @@ class DrawFragment : Fragment() {
       handleViewTouch(event)
       true
     })
-    sound_button.setOnTouchListener({ _, event ->
+    binding.soundButton.setOnTouchListener({ _, event ->
       handlePlayButton(event)
       true
     })
-    play_field.setOnTouchListener({ _, event ->
+    binding.playField.setOnTouchListener({ _, event ->
       when (event.action) {
         MotionEvent.ACTION_UP -> {
           playField = !playField
           pianoField = false
 
-          piano.visibility = if (pianoField) VISIBLE else GONE
-          play_field.setText(if (playField) R.string.playfield_on else R.string.playfield_off)
-          piano_field.setText(if (pianoField) R.string.piano_on else R.string.piano_off)
+          binding.piano.visibility = if (pianoField) VISIBLE else GONE
+          binding.playField.setText(if (playField) R.string.playfield_on else R.string.playfield_off)
+          binding.pianoField.setText(if (pianoField) R.string.piano_on else R.string.piano_off)
         }
       }
       true
     })
-    piano_field.setOnTouchListener({ _, event ->
+    binding.pianoField.setOnTouchListener({ _, event ->
       when (event.action) {
         MotionEvent.ACTION_UP -> {
           pianoField = !pianoField
           playField = false
 
-          piano.visibility = if (pianoField) VISIBLE else GONE
-          play_field.setText(if (playField) R.string.playfield_on else R.string.playfield_off)
-          piano_field.setText(if (pianoField) R.string.piano_on else R.string.piano_off)
+          binding.piano.visibility = if (pianoField) VISIBLE else GONE
+          binding.playField.setText(if (playField) R.string.playfield_on else R.string.playfield_off)
+          binding.pianoField.setText(if (pianoField) R.string.piano_on else R.string.piano_off)
           if (pianoField) setUpPiano()
         }
       }
       true
     })
-    k0.setOnTouchListener({ _, event ->
+    binding.k0.setOnTouchListener({ _, event ->
       when (event.action) {
         MotionEvent.ACTION_UP -> {
           Log.d("TEST", "Starting")

@@ -119,7 +119,7 @@ class SoundTone//TODO FIX
       val pBuffer = ShortArray(Math.floor(mBuffer.size / p.toDouble()).toInt())
       while (di < mBuffer.size - 2) {
         // L + ((R - L) * fraction)
-        pBuffer[i] = (mBuffer[Math.floor(di).toInt()] + ((mBuffer[Math.ceil(di).toInt()] - (mBuffer[Math.floor(di).toInt()])) * (di - Math.floor(di)))).toShort()
+        pBuffer[i] = (mBuffer[Math.floor(di).toInt()] + ((mBuffer[Math.ceil(di).toInt()] - (mBuffer[Math.floor(di).toInt()])) * (di - Math.floor(di)))).toInt().toShort()
         di += p
         i++
       }

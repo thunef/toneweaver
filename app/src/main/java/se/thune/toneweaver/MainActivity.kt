@@ -2,42 +2,47 @@ package se.thune.toneweaver
 
 
 import android.os.Bundle
-import android.support.design.widget.BottomNavigationView
-import android.support.v4.app.Fragment
-import android.support.v7.app.AppCompatActivity
-import kotlinx.android.synthetic.main.activity_main.*
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import androidx.fragment.app.Fragment
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.navigation.NavigationBarView
+import se.thune.toneweaver.databinding.ActivityMainBinding
+
 
 class MainActivity : AppCompatActivity() {
-    val manager = supportFragmentManager
-    val drawFragment : Fragment = DrawFragment()
-
-    private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
-        when (item.itemId) {
-            R.id.navigation_home -> {
-                message.setText(R.string.title_home)
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_dashboard -> {
-                message.setText(R.string.title_dashboard)
-                showFragment(drawFragment)
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_notifications -> {
-                message.setText(R.string.title_notifications)
-                return@OnNavigationItemSelectedListener true
-            }
-        }
-        false
-    }
+    private val manager = supportFragmentManager
+    private val drawFragment : Fragment = DrawFragment()
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        println("I am alive")
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        binding.navigation.setOnItemSelectedListener { item ->
+            println("Press the press $item")
+            when (item.itemId) {
+                R.id.navigation_home -> {
+                    binding.message.setText(R.string.title_draw)
+                    true
+                }
+                R.id.navigation_dashboard -> {
+                    binding.message.setText(R.string.title_dashboard)
+                    showFragment(drawFragment)
+                    true
+                }
+                R.id.navigation_notifications -> {
+                    binding.message.setText(R.string.title_notifications)
+                    true
+                }
+                else -> false
+            }
 
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
+        }
     }
 
-    fun showFragment(fragment : Fragment) {
+    private fun showFragment(fragment : Fragment) {
+        println("Show the frag")
         val transaction = manager.beginTransaction()
         transaction.replace(R.id.fragment_holder, fragment)
         transaction.addToBackStack(null)
